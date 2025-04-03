@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+
+  traefik:
+    image: traefik:v2.9
+    container_name: traefik
+    security_opt:
+      - no-new-privileges:true
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml
+    ports:
+      - "80:80"
+      - "8080:8080"
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.middlewares=traefik-whitelist"
+      - "traefik.http.middlewares.traefik-whitelist.ipwhitelist.sourcerange=127.0.0.1/32, 172.0.0.0/8"
+
+  servicio-analiticas:
+    build: ./servicio-analiticas
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicio-analiticas.rule=PathPrefix(`/servicio-analiticas`)"
+      - "traefik.http.routers.servicio-analiticas.entrypoints=web"
+      - "traefik.http.routers.servicio-analiticas.middlewares=auth-basic"
+      - "traefik.http.middlewares.auth-basic.basicauth.users=tomas:{SHA}QL0AFWMIX8NRZTKeof9cXsvbvu8="
+      - "traefik.http.services.servicio-analiticas.loadbalancer.server.port=3000"
+      - "traefik.http.routers.servicio-analiticas.middlewares=auth-basic,cors-headers"
+      - "traefik.http.middlewares.cors-headers.headers.accesscontrolallowmethods=GET,POST"
+    networks:
+      - traefik_network
+
+  # Cliente App (3 instancias)
+
+  cliente-app1:
+    build: ./cliente-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cliente-app1.rule=PathPrefix(`/cliente/app1`)"
+      - "traefik.http.routers.cliente-app1.entrypoints=web"
+      - "traefik.http.routers.cliente-app1.middlewares=strip-app1"
+      - "traefik.http.middlewares.strip-app1.stripprefix.prefixes=/cliente/app1"
+      - "traefik.http.services.cliente-app1.loadbalancer.server.port=3001"
+    environment:
+      - SERVICE_ID=app1
+    networks:
+      - traefik_network
+
+  cliente-app2:
+    build: ./cliente-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cliente-app2.rule=PathPrefix(`/cliente/app2`)"
+      - "traefik.http.routers.cliente-app2.entrypoints=web"
+      - "traefik.http.routers.cliente-app2.middlewares=strip-app2"
+      - "traefik.http.middlewares.strip-app2.stripprefix.prefixes=/cliente/app2"
+      - "traefik.http.services.cliente-app2.loadbalancer.server.port=3001"
+    environment:
+      - SERVICE_ID=app2
+    networks:
+      - traefik_network
+
+  cliente-app3:
+    build: ./cliente-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cliente-app3.rule=PathPrefix(`/cliente/app3`)"
+      - "traefik.http.routers.cliente-app3.entrypoints=web"
+      - "traefik.http.routers.cliente-app3.middlewares=strip-app3"
+      - "traefik.http.middlewares.strip-app3.stripprefix.prefixes=/cliente/app3"
+      - "traefik.http.services.cliente-app3.loadbalancer.server.port=3001"
+    environment:
+      - SERVICE_ID=app3
+    networks:
+      - traefik_network
+
+  panel-visual:
+    build: ./panel-visual
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.panel-visual.rule=PathPrefix(`/panel-visual`)"
+      - "traefik.http.routers.panel-visual.entrypoints=web"
+      - "traefik.http.services.panel-visual.loadbalancer.server.port=80"
+      - "traefik.http.routers.panel-visual.middlewares=strip-panel-visual"
+      - "traefik.http.middlewares.strip-panel-visual.stripprefix.prefixes=/panel-visual"
+      - "traefik.http.middlewares.strip-panel-visual.stripprefix.forceSlash=false"
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    driver: bridge
