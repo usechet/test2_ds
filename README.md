@@ -15,8 +15,15 @@ docker-compose ps
 
 2. Capturas de pantalla
 
+![alt text](<Screenshot from 2025-04-02 19-07-41.png>)
 
+![alt text](<Screenshot from 2025-04-02 19-08-16.png>)
 
+![alt text](<Screenshot from 2025-04-02 19-08-22.png>)
+
+![alt text](<Screenshot from 2025-04-02 19-08-55.png>)
+
+![alt text](<Screenshot from 2025-04-03 08-05-53.png>)
 3. Acceder 
 
 Traefik: http://traefik.localhost/dashboard/#/
@@ -28,5 +35,5 @@ Servicio-analiticas: http://localhost/servicio-analiticas
 Instancais: http://localhost/cliente/app1
                                     /app2
                                     /app3
-                                    
+
 
